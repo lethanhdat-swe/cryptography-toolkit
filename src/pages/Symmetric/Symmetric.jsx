@@ -13,9 +13,12 @@ function Symmetric() {
 
     // Hàm set cấu hình mode cho thư viện CryptoJS
     const getCryptoConfig = () => {
+        const defaultIV = CryptoJS.enc.Utf8.parse("0000000000000000");
         return {
             mode: mode === "ECB" ? CryptoJS.mode.ECB : CryptoJS.mode.CBC,
-            padding: CryptoJS.pad.Pkcs7
+            padding: CryptoJS.pad.Pkcs7,
+            // Nếu mode là CBC thì truyền IV vào, ECB thì bỏ qua
+            iv: mode === "CBC" ? defaultIV : undefined
         };
     };
     
@@ -28,16 +31,18 @@ function Symmetric() {
             let encrypted;
             const config = getCryptoConfig();
 
+            const parsedKey = CryptoJS.enc.Utf8.parse(key);
+
             // Chạy thuật toán tương ứng
             if (algorithm === "AES") {
-                encrypted = CryptoJS.AES.encrypt(text, key, config);
+                encrypted = CryptoJS.AES.encrypt(text, parsedKey, config);
             } else if (algorithm === "DES") {
-                encrypted = CryptoJS.DES.encrypt(text, key, config);
+                encrypted = CryptoJS.DES.encrypt(text, parsedKey, config);
             } else if (algorithm === "3DES") {
-                encrypted = CryptoJS.TripleDES.encrypt(text, key, config);
+                encrypted = CryptoJS.TripleDES.encrypt(text, parsedKey, config);
             }
 
-            setResult(encrypted.toString());
+            setResult(encrypted.ciphertext.toString(CryptoJS.enc.Hex));
         } catch (error) {
             setResult("Lỗi mã hóa");
         }
@@ -51,14 +56,21 @@ function Symmetric() {
         try {
             let decryptedBytes;
             const config = getCryptoConfig();
-
+            
+            const parsedKey = CryptoJS.enc.Utf8.parse(key);
+            // Vì Encrypt xuất ra chuỗi Hex nên khi Decrypt
+            // phải đóng gói lại chuỗi text đó thành định dạng mà CryptoJS hiểu được.
+            const cipherParams = CryptoJS.lib.CipherParams.create({
+                ciphertext: CryptoJS.enc.Hex.parse(text)
+            });
+            
             // Chạy thuật toán tương ứng
             if (algorithm === "AES") {
-                decryptedBytes = CryptoJS.AES.decrypt(text, key, config);
+                decryptedBytes = CryptoJS.AES.decrypt(cipherParams, parsedKey, config);
             } else if (algorithm === "DES") {
-                decryptedBytes = CryptoJS.DES.decrypt(text, key, config);
+                decryptedBytes = CryptoJS.DES.decrypt(cipherParams, parsedKey, config);
             } else if (algorithm === "3DES") {
-                decryptedBytes = CryptoJS.TripleDES.decrypt(text, key, config);
+                decryptedBytes = CryptoJS.TripleDES.decrypt(cipherParams, parsedKey, config);
             }
 
             const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
