@@ -19,7 +19,7 @@ const Footer = () => {
 
                 {/* Right badge */}
                 <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-500">
-                    HCMUS — Security Lab
+                    PTIT — Security Lab
                 </span>
             </div>
         </footer>
